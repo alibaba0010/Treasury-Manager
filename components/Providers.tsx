@@ -6,10 +6,15 @@ import { type ReactNode, useState } from "react";
 
 import { config as getConfig, chains } from "@/config/wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { WalletProvider } from "@/contexts/WalletContext";
 
+const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID;
+if (!projectId) {
+  throw new Error("Missing NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID");
+}
 const { wallets } = getDefaultWallets({
-  appName: "AI Treasury Manager",
-  projectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || "",
+  appName: "Treasury Manager",
+  projectId,
 });
 
 export function Providers(props: {
@@ -22,7 +27,13 @@ export function Providers(props: {
   return (
     <WagmiProvider config={config} initialState={props.initialState}>
       <QueryClientProvider client={queryClient}>
-        {props.children}
+        <RainbowKitProvider
+          modalSize="compact"
+          showRecentTransactions={false}
+          initialChain={chains[0]}
+        >
+          <WalletProvider>{props.children}</WalletProvider>
+        </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );

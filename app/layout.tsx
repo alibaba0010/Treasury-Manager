@@ -11,7 +11,7 @@ import { cookieToInitialState } from "wagmi";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "AI Treasury Manager",
+  title: "Treasury Manager",
   description:
     "Institutional treasury management with AI-powered portfolio rebalancing",
 };

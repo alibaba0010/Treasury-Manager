@@ -1,58 +1,14 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { ThemeProvider } from "@/components/theme-provider"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { ThemeToggle } from "@/components/theme-toggle"
-import {
-  Wallet,
-  Bot,
-  Shield,
-  TrendingUp,
-  RefreshCw,
-  BarChart3,
-  Zap,
-  Lock,
-  Globe,
-  ArrowRight,
-  CheckCircle,
-} from "lucide-react"
-import { useRouter } from "next/navigation"
-
-const features = [
-  {
-    icon: Bot,
-    title: "AI-Powered Decisions",
-    description: "Advanced AI algorithms analyze market conditions and optimize portfolio allocation in real-time.",
-  },
-  {
-    icon: RefreshCw,
-    title: "Automated Rebalancing",
-    description: "Intelligent rebalancing based on market signals, risk parameters, and yield optimization strategies.",
-  },
-  {
-    icon: Shield,
-    title: "Risk Management",
-    description: "Comprehensive risk analytics including VaR calculations, stress testing, and compliance monitoring.",
-  },
-  {
-    icon: BarChart3,
-    title: "Real-time Analytics",
-    description: "Live market data, performance metrics, and detailed reporting for institutional-grade insights.",
-  },
-  {
-    icon: Lock,
-    title: "Enterprise Security",
-    description: "Bank-grade security with multi-factor authentication, audit trails, and regulatory compliance.",
-  },
-  {
-    icon: Globe,
-    title: "Multi-Asset Support",
-    description: "Support for tokenized treasury assets including OUSG, USDY, and other institutional instruments.",
-  },
-]
+import { ThemeProvider } from "@/components/theme-provider";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Wallet, TrendingUp, Zap, ArrowRight, CheckCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { features } from "@/utils/features";
+import { useWallet } from "@/contexts/WalletContext";
 
 const benefits = [
   "Maximize yield while maintaining capital preservation",
@@ -61,28 +17,15 @@ const benefits = [
   "Access institutional-grade treasury products",
   "Real-time risk assessment and mitigation",
   "Transparent AI decision-making process",
-]
+];
 
 export default function HomePage() {
-  const [isConnecting, setIsConnecting] = useState(false)
-  const [isConnected, setIsConnected] = useState(false)
-  const router = useRouter()
-
-  // useEffect(() => {
-  //   const connected = localStorage.getItem("wallet-connected") === "true"
-  //   setIsConnected(connected)
-  // }, [])
-
-  const handleConnectWallet = async () => {
-    setIsConnecting(true)
-    localStorage.setItem("wallet-connected", "true")
-    setIsConnected(true)
-    setIsConnecting(false)
-  }
+  const { isConnected, handleConnectWallet } = useWallet();
+  const router = useRouter();
 
   const handleOpenDashboard = () => {
-    router.push("/dashboard")
-  }
+    router.push("/dashboard");
+  };
 
   return (
     <ThemeProvider
@@ -119,20 +62,10 @@ export default function HomePage() {
                 ) : (
                   <Button
                     onClick={handleConnectWallet}
-                    disabled={isConnecting}
                     className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
                   >
-                    {isConnecting ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                        Connecting...
-                      </>
-                    ) : (
-                      <>
-                        <Wallet className="mr-2 h-4 w-4" />
-                        Connect Wallet
-                      </>
-                    )}
+                    <Wallet className="mr-2 h-4 w-4" />
+                    Connect Wallet
                   </Button>
                 )}
               </div>
@@ -143,7 +76,10 @@ export default function HomePage() {
         {/* Hero Section */}
         <section className="container mx-auto px-6 py-20">
           <div className="text-center max-w-4xl mx-auto">
-            <Badge variant="secondary" className="mb-6 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+            <Badge
+              variant="secondary"
+              className="mb-6 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20"
+            >
               <Zap className="w-3 h-3 mr-1" />
               Next-Generation Treasury Management
             </Badge>
@@ -156,9 +92,10 @@ export default function HomePage() {
             </h1>
 
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-              Institutional-grade treasury management powered by artificial intelligence. Optimize your portfolio
-              allocation across tokenized assets with automated rebalancing, risk management, and real-time market
-              analysis.
+              Institutional-grade treasury management powered by artificial
+              intelligence. Optimize your portfolio allocation across tokenized
+              assets with automated rebalancing, risk management, and real-time
+              market analysis.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -166,20 +103,10 @@ export default function HomePage() {
                 <Button
                   size="lg"
                   onClick={handleConnectWallet}
-                  disabled={isConnecting}
                   className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-lg px-8 py-6"
                 >
-                  {isConnecting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
-                      Connecting Wallet...
-                    </>
-                  ) : (
-                    <>
-                      <Wallet className="mr-2 h-5 w-5" />
-                      Connect Wallet to Start
-                    </>
-                  )}
+                  <Wallet className="mr-2 h-5 w-5" />
+                  Connect Wallet to Start
                 </Button>
               ) : (
                 <Button
@@ -208,13 +135,14 @@ export default function HomePage() {
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">Powerful Features</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Everything you need to manage institutional treasury portfolios with confidence and precision.
+              Everything you need to manage institutional treasury portfolios
+              with confidence and precision.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => {
-              const Icon = feature.icon
+              const Icon = feature.icon;
               return (
                 <Card
                   key={index}
@@ -227,10 +155,12 @@ export default function HomePage() {
                     <CardTitle className="text-xl">{feature.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground">{feature.description}</p>
+                    <p className="text-muted-foreground">
+                      {feature.description}
+                    </p>
                   </CardContent>
                 </Card>
-              )
+              );
             })}
           </div>
         </section>
@@ -239,9 +169,12 @@ export default function HomePage() {
         <section className="container mx-auto px-6 py-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
-              <h2 className="text-4xl font-bold mb-6">Why Choose Treasury AI?</h2>
+              <h2 className="text-4xl font-bold mb-6">
+                Why Choose Treasury AI?
+              </h2>
               <p className="text-xl text-muted-foreground mb-8">
-                Transform your treasury operations with cutting-edge technology designed for institutional investors.
+                Transform your treasury operations with cutting-edge technology
+                designed for institutional investors.
               </p>
 
               <div className="space-y-4">
@@ -259,15 +192,21 @@ export default function HomePage() {
                 <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary/60 rounded-full flex items-center justify-center mx-auto mb-6">
                   <TrendingUp className="h-10 w-10 text-primary-foreground" />
                 </div>
-                <h3 className="text-2xl font-bold mb-4">Portfolio Performance</h3>
+                <h3 className="text-2xl font-bold mb-4">
+                  Portfolio Performance
+                </h3>
                 <div className="grid grid-cols-2 gap-6 text-center">
                   <div>
                     <div className="text-3xl font-bold text-primary">8.7%</div>
-                    <div className="text-sm text-muted-foreground">Average YTD Return</div>
+                    <div className="text-sm text-muted-foreground">
+                      Average YTD Return
+                    </div>
                   </div>
                   <div>
                     <div className="text-3xl font-bold text-primary">2.1%</div>
-                    <div className="text-sm text-muted-foreground">Risk Score</div>
+                    <div className="text-sm text-muted-foreground">
+                      Risk Score
+                    </div>
                   </div>
                   <div>
                     <div className="text-3xl font-bold text-primary">99.9%</div>
@@ -275,7 +214,9 @@ export default function HomePage() {
                   </div>
                   <div>
                     <div className="text-3xl font-bold text-primary">$12M+</div>
-                    <div className="text-sm text-muted-foreground">Assets Managed</div>
+                    <div className="text-sm text-muted-foreground">
+                      Assets Managed
+                    </div>
                   </div>
                 </div>
               </div>
@@ -288,27 +229,18 @@ export default function HomePage() {
           <Card className="p-12 text-center card-gradient-light border-primary/20">
             <h2 className="text-4xl font-bold mb-4">Ready to Get Started?</h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join leading institutions using AI-powered treasury management to optimize their portfolios.
+              Join leading institutions using AI-powered treasury management to
+              optimize their portfolios.
             </p>
 
             {!isConnected ? (
               <Button
                 size="lg"
                 onClick={handleConnectWallet}
-                disabled={isConnecting}
                 className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-lg px-12 py-6"
               >
-                {isConnecting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
-                    Connecting...
-                  </>
-                ) : (
-                  <>
-                    <Wallet className="mr-2 h-5 w-5" />
-                    Connect Your Wallet
-                  </>
-                )}
+                <Wallet className="mr-2 h-5 w-5" />
+                Connect Your Wallet
               </Button>
             ) : (
               <Button
@@ -335,11 +267,13 @@ export default function HomePage() {
                   Treasury AI
                 </span>
               </div>
-              <p className="text-sm text-muted-foreground">© 2024 Treasury AI. All rights reserved.</p>
+              <p className="text-sm text-muted-foreground">
+                © 2024 Treasury AI. All rights reserved.
+              </p>
             </div>
           </div>
         </footer>
       </div>
     </ThemeProvider>
-  )
+  );
 }

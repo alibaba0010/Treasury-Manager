@@ -4,10 +4,6 @@ import { mainnet, polygon, avalanche, arbitrum } from "wagmi/chains";
 import { createConfig } from "wagmi";
 
 const alchemyApiKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
-const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID;
-if (!projectId) {
-  throw new Error("Missing NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID");
-}
 
 if (!alchemyApiKey) {
   throw new Error("Missing ALCHEMY_API_KEY");
