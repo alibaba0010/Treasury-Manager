@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
 import { formatUnits } from "viem";
+import { useWallet } from "@/contexts/WalletContext";
 
 interface TokenBalance {
   chain: string;
@@ -11,13 +12,13 @@ interface TokenBalance {
 }
 
 export function useTokenBalances() {
-  const { address, isConnected } = useAccount();
+  const { walletAddress, isConnected } = useWallet();
   const [balances, setBalances] = useState<TokenBalance[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalValue, setTotalValue] = useState(0);
 
   useEffect(() => {
-    if (!isConnected || !address) {
+    if (!isConnected || !walletAddress) {
       setBalances([]);
       setIsLoading(false);
       return;
@@ -35,7 +36,7 @@ export function useTokenBalances() {
         const allBalances = await Promise.all(
           networks.map(async (network) => {
             const response = await fetch(
-              `https://${network.url}.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}/token/balances/${address}`
+              `https://${network.url}.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}/token/balances/${walletAddress}`
             );
             const data = await response.json();
             return data.tokenBalances?.map((token: any) => ({
@@ -68,7 +69,7 @@ export function useTokenBalances() {
     }
 
     fetchBalances();
-  }, [address, isConnected]);
+  }, [walletAddress, isConnected]);
 
   return { balances, isLoading, totalValue };
 }

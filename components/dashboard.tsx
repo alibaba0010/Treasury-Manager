@@ -20,12 +20,12 @@ import { PositionsTable } from "@/components/positions-table";
 import { ActivityFeed } from "@/components/activity-feed";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount } from "wagmi";
+import { useWallet } from "@/contexts/WalletContext";
 
 export function Dashboard() {
   const [isActive, setIsActive] = useState(true);
   const [ytdReturn, setYtdReturn] = useState(8.7);
-  const { isConnected } = useAccount();
+  const { isConnected, walletAddress } = useWallet();
   const { balances, isLoading, totalValue } = useTokenBalances();
 
   // Simulate real-time updates for other metrics

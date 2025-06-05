@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  ReactNode,
+  useEffect,
+  useState,
+} from "react";
 import { useAccount, useDisconnect } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 
@@ -9,29 +15,17 @@ interface WalletContextType {
   isConnecting: boolean;
   handleConnectWallet: () => void;
   handleDisconnectWallet: () => void;
+  walletAddress?: string | null;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const { isConnected, address } = useAccount();
+  const { isConnected, address, status, chain } = useAccount();
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const { disconnect } = useDisconnect();
   const { openConnectModal } = useConnectModal();
-  //   useEffect(() => {
-  //     if (account.isConnected) {
-  //       const { address, addresses, status, chain } = account;
-  //       dispatch(setWalletAdress({ address, addresses, status }));
-  //       if (chain?.name === "Electroneum Mainnet") {
-  //         setHasAccess(true);
-  //         if (url && !hasNavigated) {
-  //           navigate(url);
-  //           setHasNavigated(true);
-  //         }
-  //       }
-  //     } else {
-  //       navigate("/");
-  //     }
-  //   }, [account, url, hasNavigated]);
+
   const handleConnectWallet = async () => {
     if (openConnectModal) {
       openConnectModal();
@@ -41,12 +35,17 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const handleDisconnectWallet = () => {
     disconnect();
   };
+  useEffect(() => {
+    if (!isConnected) return;
+    setWalletAddress(address || null);
+  }, [isConnected]);
 
   const value = {
     isConnected,
     handleConnectWallet,
     handleDisconnectWallet,
     isConnecting: false,
+    walletAddress: walletAddress || null,
   };
 
   return (
@@ -61,3 +60,18 @@ export function useWallet() {
   }
   return context;
 }
+//   useEffect(() => {
+//     if (account.isConnected) {
+//       const { address, addresses, status, chain } = account;
+//       dispatch(setWalletAdress({ address, addresses, status }));
+//       if (chain?.name === "Electroneum Mainnet") {
+//         setHasAccess(true);
+//         if (url && !hasNavigated) {
+//           navigate(url);
+//           setHasNavigated(true);
+//         }
+//       }
+//     } else {
+//       navigate("/");
+//     }
+//   }, [account, url, hasNavigated]);
