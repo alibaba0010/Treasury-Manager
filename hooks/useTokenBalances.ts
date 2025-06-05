@@ -1,24 +1,43 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { formatUnits } from "viem";
 import { useWallet } from "@/contexts/WalletContext";
 import { networks } from "@/utils/networks";
-
-interface TokenBalance {
-  chain: string;
-  symbol: string;
-  balance: string;
-  value: number;
-  address: string;
-  logo: string;
-  name: string;
-  decimals: number;
-}
+import { TokenBalance } from "@/types/token";
 
 interface Network {
   name: string;
   url: string;
   isTestnet: boolean;
 }
+
+// Native token price mapping for CoinGecko
+const nativeTokenIds: Record<string, string> = {
+  ethereum: "ethereum",
+  polygon: "matic-network",
+  arbitrum: "ethereum", // ARB uses ETH
+  optimism: "ethereum", // OP uses ETH
+  avalanche: "avalanche-2",
+  "bnb smart chain": "binancecoin",
+  base: "ethereum", // Base uses ETH
+  "eth-sepolia": "ethereum",
+  "arb-sepolia": "ethereum",
+};
+
+// Native token symbols
+const nativeTokenSymbols: Record<string, string> = {
+  ethereum: "ETH",
+  polygon: "MATIC",
+  arbitrum: "ETH",
+  optimism: "ETH",
+  avalanche: "AVAX",
+  "bnb smart chain": "BNB",
+  base: "ETH",
+  "eth-sepolia": "ETH",
+  "arb-sepolia": "ETH",
+};
+
 const fetchTokenPriceUSD = async (
   contractAddress: string,
   chain: string
@@ -29,18 +48,25 @@ const fetchTokenPriceUSD = async (
       ethereum: "ethereum",
       polygon: "polygon-pos",
       arbitrum: "arbitrum-one",
-      optimism: "optimism",
-      avalanche: "avalanche-2",
+      optimism: "optimistic-ethereum",
+      avalanche: "avalanche",
       "bnb smart chain": "binance-smart-chain",
       base: "base",
       "eth-sepolia": "ethereum",
       "arb-sepolia": "arbitrum-one",
     };
+
     const platformId = platformMap[chain.toLowerCase()];
     if (!platformId) return 0;
 
     const url = `https://api.coingecko.com/api/v3/simple/token_price/${platformId}?contract_addresses=${contractAddress}&vs_currencies=usd`;
     const res = await fetch(url);
+
+    if (!res.ok) {
+      console.warn(`Failed to fetch price for ${contractAddress} on ${chain}`);
+      return 0;
+    }
+
     const data = await res.json();
     const price = data[contractAddress.toLowerCase()]?.usd;
     return price ? Number(price) : 0;
@@ -49,6 +75,29 @@ const fetchTokenPriceUSD = async (
     return 0;
   }
 };
+
+const fetchNativePriceUSD = async (chain: string): Promise<number> => {
+  try {
+    const tokenId = nativeTokenIds[chain.toLowerCase()];
+    if (!tokenId) return 0;
+
+    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${tokenId}&vs_currencies=usd`;
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      console.warn(`Failed to fetch native price for ${chain}`);
+      return 0;
+    }
+
+    const data = await res.json();
+    const price = data[tokenId]?.usd;
+    return price ? Number(price) : 0;
+  } catch (e) {
+    console.error("Error fetching native token price:", e);
+    return 0;
+  }
+};
+
 const fetchNativeBalance = async (
   network: Network,
   walletAddress: string
@@ -65,33 +114,46 @@ const fetchNativeBalance = async (
         params: [walletAddress, "latest"],
       }),
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
+
+    if (data.error) {
+      throw new Error(`API error: ${data.error.message}`);
+    }
+
     const balance = formatUnits(BigInt(data.result), 18);
     const amount = Number(balance);
+
     if (amount <= 0) return null;
 
     // Fetch USD price for native token
-    const price = await fetchTokenPriceUSD(
-      network.name === "ethereum" ? "ethereum" : network.name, // Use network name for native
-      network.name
-    );
+    const price = await fetchNativePriceUSD(network.name);
     const value = amount * price;
+
+    const symbol =
+      nativeTokenSymbols[network.name.toLowerCase()] ||
+      network.name.toUpperCase();
 
     return {
       chain: network.name,
-      symbol: network.name === "ethereum" ? "ETH" : network.name.toUpperCase(),
+      symbol,
       balance,
       value,
       address: "native",
       decimals: 18,
-      logo: "", // You can add a logo URL if you want
-      name: `${network.name} Native`,
+      logo: "", // You can add native token logos here
+      name: `${network.name} Native Token`,
     };
   } catch (error) {
     console.error(`Error fetching native balance for ${network.name}:`, error);
     return null;
   }
 };
+
 const getAlchemyUrl = (networkUrl: string): string => {
   const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 
@@ -101,6 +163,7 @@ const getAlchemyUrl = (networkUrl: string): string => {
 
   return `https://${networkUrl}.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
 };
+
 const fetchTokenMetadata = async (
   network: Network,
   tokenAddress: string
@@ -120,7 +183,20 @@ const fetchTokenMetadata = async (
       }),
     });
 
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
+
+    if (data.error) {
+      console.warn(
+        `Error fetching metadata for ${tokenAddress}:`,
+        data.error.message
+      );
+      return null;
+    }
+
     return data.result;
   } catch (error) {
     console.error(`Error fetching token metadata:`, error);
@@ -202,9 +278,10 @@ const fetchNetworkBalances = async (
   }
 };
 
-export function useTokenBalances(includeTestnets: boolean = false) {
+export function useTokenBalances(includeTestnets = false) {
   const { walletAddress, isConnected } = useWallet();
   const [balances, setBalances] = useState<TokenBalance[]>([]);
+  const [nativeBalances, setNativeBalances] = useState<TokenBalance[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalValue, setTotalValue] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -212,6 +289,7 @@ export function useTokenBalances(includeTestnets: boolean = false) {
   useEffect(() => {
     if (!isConnected || !walletAddress) {
       setBalances([]);
+      setNativeBalances([]);
       setIsLoading(false);
       return;
     }
@@ -223,20 +301,43 @@ export function useTokenBalances(includeTestnets: boolean = false) {
       try {
         if (!walletAddress) return;
 
+        const filteredNetworks = includeTestnets
+          ? networks
+          : networks.filter((network) => !network.isTestnet);
+
+        // Fetch ERC-20 token balances
         const allBalances = await Promise.all(
-          networks.map((network) =>
+          filteredNetworks.map((network) =>
             fetchNetworkBalances(network, walletAddress)
           )
         );
 
-        const flattenedBalances = allBalances.flat().filter(Boolean);
-        setBalances(flattenedBalances);
+        // Fetch native token balances
+        const allNativeBalances = await Promise.all(
+          filteredNetworks.map((network) =>
+            fetchNativeBalance(network, walletAddress)
+          )
+        );
 
-        const total = flattenedBalances.reduce(
-          (acc, token) => acc + Number(token.balance),
+        const flattenedBalances = allBalances.flat().filter(Boolean);
+        const flattenedNativeBalances = allNativeBalances.filter(
+          (balance): balance is TokenBalance => balance !== null
+        );
+
+        setBalances(flattenedBalances);
+        setNativeBalances(flattenedNativeBalances);
+
+        // Calculate total value from both ERC-20 and native tokens
+        const erc20Total = flattenedBalances.reduce(
+          (acc, token) => acc + token.value,
           0
         );
-        setTotalValue(total);
+        const nativeTotal = flattenedNativeBalances.reduce(
+          (acc, token) => acc + token.value,
+          0
+        );
+
+        setTotalValue(erc20Total + nativeTotal);
       } catch (error) {
         setError(
           error instanceof Error ? error.message : "An unknown error occurred"
@@ -250,5 +351,5 @@ export function useTokenBalances(includeTestnets: boolean = false) {
     fetchBalances();
   }, [walletAddress, isConnected, includeTestnets]);
 
-  return { balances, isLoading, totalValue, error };
+  return { balances, nativeBalances, isLoading, totalValue, error };
 }
