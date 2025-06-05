@@ -25,9 +25,14 @@ import { useWallet } from "@/contexts/WalletContext";
 export function Dashboard() {
   const [isActive, setIsActive] = useState(true);
   const [ytdReturn, setYtdReturn] = useState(8.7);
+  const [selectedInvestments, setSelectedInvestments] = useState<{
+    [key: string]: number;
+  }>({});
+  const [selectedChains, setSelectedChains] = useState<string[]>([]);
+  const [selectedTokens, setSelectedTokens] = useState<string[]>([]);
   const { isConnected, walletAddress } = useWallet();
   const { balances, isLoading, totalValue } = useTokenBalances();
-
+  // console.log("Balances:", balances);
   // Simulate real-time updates for other metrics
   useEffect(() => {
     const interval = setInterval(() => {
@@ -42,8 +47,20 @@ export function Dashboard() {
   const toggleTrading = () => {
     setIsActive(!isActive);
   };
-
-  if (!isConnected) {
+  const handleInvestmentChange = (
+    address: string,
+    max: number,
+    value: string
+  ) => {
+    let amount = parseFloat(value);
+    if (isNaN(amount) || amount < 0) amount = 0;
+    if (amount > max) amount = max;
+    setSelectedInvestments((prev) => ({
+      ...prev,
+      [address]: amount,
+    }));
+  };
+  if (!isConnected || !walletAddress) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
         <h1 className="text-3xl font-bold text-center">Connect Your Wallet</h1>
@@ -217,11 +234,37 @@ export function Dashboard() {
                   className="p-4 border rounded-lg bg-card/50 hover:shadow-md transition-all"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">{balance.symbol}</span>
+                    <div className="flex items-center gap-2">
+                      {balance.logo && (
+                        <img
+                          src={balance.logo}
+                          alt={balance.symbol}
+                          className="w-6 h-6 rounded-full"
+                        />
+                      )}
+                      <div>
+                        <span className="font-medium">{balance.symbol}</span>
+                        <div className="text-xs text-muted-foreground">
+                          {balance.name}
+                        </div>
+                      </div>
+                    </div>
                     <Badge variant="secondary">{balance.chain}</Badge>
                   </div>
                   <div className="mt-2 text-lg font-bold">
-                    {parseFloat(balance.balance).toFixed(4)}
+                    {parseFloat(balance.balance).toFixed(
+                      Math.min(balance.decimals || 18, 2)
+                    )}
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      {balance.symbol}
+                    </span>
+                  </div>
+                  <div className="text-sm text-green-700 font-semibold mt-1">
+                    $
+                    {balance.value.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
                   </div>
                 </div>
               ))}
@@ -229,7 +272,60 @@ export function Dashboard() {
           )}
         </CardContent>
       </Card>
-
+      {/* Add below the Token Balances section */}
+      <Card className="bg-gradient-to-br from-card to-card/50 border-2 hover:border-primary/20 transition-all duration-300">
+        <CardHeader>
+          <CardTitle className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            Select Tokens to Invest
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {balances.map((balance, i) => (
+              <div key={i} className="p-4 border rounded-lg bg-card/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedInvestments[balance.address] > 0}
+                    onChange={(e) =>
+                      setSelectedInvestments((prev) => ({
+                        ...prev,
+                        [balance.address]: e.target.checked ? 0.01 : 0,
+                      }))
+                    }
+                  />
+                  <span className="font-medium">{balance.symbol}</span>
+                  <Badge variant="secondary">{balance.chain}</Badge>
+                </div>
+                <input
+                  type="number"
+                  min={0}
+                  max={parseFloat(balance.balance)}
+                  step="any"
+                  disabled={
+                    !selectedInvestments[balance.address] &&
+                    selectedInvestments[balance.address] !== 0
+                  }
+                  value={selectedInvestments[balance.address] || ""}
+                  onChange={(e) =>
+                    handleInvestmentChange(
+                      balance.address,
+                      parseFloat(balance.balance),
+                      e.target.value
+                    )
+                  }
+                  className="w-full border rounded px-2 py-1"
+                  placeholder={`Max: ${parseFloat(balance.balance).toFixed(4)}`}
+                />
+                <div className="text-xs text-muted-foreground mt-1">
+                  Available: {parseFloat(balance.balance).toFixed(4)}{" "}
+                  {balance.symbol}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 bg-gradient-to-br from-card to-card/50 border-2 hover:border-primary/20 transition-all duration-300">

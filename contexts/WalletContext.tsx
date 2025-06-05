@@ -6,6 +6,7 @@ import {
   ReactNode,
   useEffect,
   useState,
+  useCallback,
 } from "react";
 import { useAccount, useDisconnect } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
@@ -22,30 +23,46 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const { isConnected, address, status, chain } = useAccount();
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const { disconnect } = useDisconnect();
   const { openConnectModal } = useConnectModal();
-
-  const handleConnectWallet = async () => {
+  const [walletState, setWalletState] = useState({
+    isConnecting: false,
+    walletAddress: null as string | null,
+  });
+  const handleConnectWallet = useCallback(() => {
     if (openConnectModal) {
       openConnectModal();
     }
-  };
+  }, [openConnectModal]);
 
-  const handleDisconnectWallet = () => {
+  const handleDisconnectWallet = useCallback(() => {
     disconnect();
-  };
+    setWalletState((prev) => ({
+      ...prev,
+      walletAddress: null,
+    }));
+  }, [disconnect]);
+
   useEffect(() => {
-    if (!isConnected) return;
-    setWalletAddress(address || null);
-  }, [isConnected]);
+    if (isConnected && address) {
+      setWalletState((prev) => ({
+        ...prev,
+        walletAddress: address,
+      }));
+    } else if (!isConnected) {
+      setWalletState((prev) => ({
+        ...prev,
+        walletAddress: null,
+      }));
+    }
+  }, [isConnected, address]);
 
   const value = {
     isConnected,
     handleConnectWallet,
     handleDisconnectWallet,
-    isConnecting: false,
-    walletAddress: walletAddress || null,
+    isConnecting: walletState.isConnecting,
+    walletAddress: walletState.walletAddress,
   };
 
   return (
