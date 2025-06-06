@@ -5,6 +5,7 @@ import { formatUnits } from "viem";
 import { useWallet } from "@/contexts/WalletContext";
 import { networks } from "@/utils/networks";
 import { TokenBalance } from "@/types/token";
+import { getTokenLogo } from "@/utils/tokenLogos";
 
 interface Network {
   name: string;
@@ -23,6 +24,21 @@ const nativeTokenIds: Record<string, string> = {
   base: "ethereum", // Base uses ETH
   "eth-sepolia": "ethereum",
   "arb-sepolia": "ethereum",
+};
+const nativeTokenLogos: Record<string, string> = {
+  ethereum: "https://assets.coingecko.com/coins/images/279/small/ethereum.png",
+  polygon:
+    "https://assets.coingecko.com/coins/images/4713/small/matic-token-icon.png",
+  arbitrum: "https://assets.coingecko.com/coins/images/279/small/ethereum.png",
+  optimism: "https://assets.coingecko.com/coins/images/279/small/ethereum.png",
+  avalanche:
+    "https://assets.coingecko.com/coins/images/12559/small/coin-round-red.png",
+  "bnb smart chain":
+    "https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png",
+  base: "https://assets.coingecko.com/coins/images/279/small/ethereum.png",
+  sepolia: "https://assets.coingecko.com/coins/images/279/small/ethereum.png",
+  "arb-sepolia":
+    "https://assets.coingecko.com/coins/images/279/small/ethereum.png",
 };
 
 // Native token symbols
@@ -137,7 +153,7 @@ const fetchNativeBalance = async (
     const symbol =
       nativeTokenSymbols[network.name.toLowerCase()] ||
       network.name.toUpperCase();
-
+    console.log("Network name: ", network.name);
     return {
       chain: network.name,
       symbol,
@@ -145,7 +161,7 @@ const fetchNativeBalance = async (
       value,
       address: "native",
       decimals: 18,
-      logo: "", // You can add native token logos here
+      logo: nativeTokenLogos[network.name.toLowerCase()] || "", // You can add native token logos here
       name: `${network.name} Native Token`,
     };
   } catch (error) {
@@ -265,7 +281,11 @@ const fetchNetworkBalances = async (
             value,
             address: token.contractAddress,
             decimals: metadata.decimals,
-            logo: metadata.logo,
+            logo: getTokenLogo(
+              network.name,
+              token.contractAddress,
+              network.isTestnet
+            ),
             name: metadata.name,
           };
         })
@@ -301,29 +321,22 @@ export function useTokenBalances(includeTestnets = false) {
       try {
         if (!walletAddress) return;
 
-        const filteredNetworks = includeTestnets
-          ? networks
-          : networks.filter((network) => !network.isTestnet);
-
         // Fetch ERC-20 token balances
         const allBalances = await Promise.all(
-          filteredNetworks.map((network) =>
+          networks.map((network) =>
             fetchNetworkBalances(network, walletAddress)
           )
         );
 
         // Fetch native token balances
         const allNativeBalances = await Promise.all(
-          filteredNetworks.map((network) =>
-            fetchNativeBalance(network, walletAddress)
-          )
+          networks.map((network) => fetchNativeBalance(network, walletAddress))
         );
 
         const flattenedBalances = allBalances.flat().filter(Boolean);
         const flattenedNativeBalances = allNativeBalances.filter(
           (balance): balance is TokenBalance => balance !== null
         );
-
         setBalances(flattenedBalances);
         setNativeBalances(flattenedNativeBalances);
 

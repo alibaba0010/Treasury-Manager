@@ -1,24 +1,26 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { DollarSign, Wallet } from "lucide-react"
-import type { TokenBalance } from "@/types/token"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { DollarSign, Wallet } from "lucide-react";
+import type { TokenBalance } from "@/types/token";
 
 interface InvestmentSectionProps {
-  balances: TokenBalance[]
-  nativeBalances: TokenBalance[]
-  selectedInvestments: { [key: string]: number }
-  setSelectedInvestments: React.Dispatch<React.SetStateAction<{ [key: string]: number }>>
-  handleInvestmentChange: (address: string, max: number, value: string) => void
-  calculateTotalInvestmentValue: () => number
-  handleInvest: () => void
-  isInvesting: boolean
+  balances: TokenBalance[];
+  nativeBalances: TokenBalance[];
+  selectedInvestments: { [key: string]: number };
+  setSelectedInvestments: React.Dispatch<
+    React.SetStateAction<{ [key: string]: number }>
+  >;
+  handleInvestmentChange: (address: string, max: number, value: string) => void;
+  calculateTotalInvestmentValue: () => number;
+  handleInvest: () => void;
+  isInvesting: boolean;
 }
 
 export function InvestmentSection({
@@ -31,7 +33,7 @@ export function InvestmentSection({
   handleInvest,
   isInvesting,
 }: InvestmentSectionProps) {
-  const allTokens = [...balances, ...nativeBalances]
+  const allTokens = [...balances, ...nativeBalances];
 
   return (
     <Card className="bg-gradient-to-br from-card to-card/50 border-2 hover:border-primary/20 transition-all duration-300">
@@ -41,8 +43,12 @@ export function InvestmentSection({
             Select Tokens to Invest
           </CardTitle>
           <div className="text-right">
-            <div className="text-sm text-muted-foreground">Total Investment Value</div>
-            <div className="text-xl font-bold text-green-600">${calculateTotalInvestmentValue().toFixed(2)}</div>
+            <div className="text-sm text-muted-foreground">
+              Total Investment Value
+            </div>
+            <div className="text-xl font-bold text-green-600">
+              ${calculateTotalInvestmentValue().toFixed(2)}
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -70,7 +76,6 @@ export function InvestmentSection({
                       className="w-5 h-5 rounded-full"
                     />
                   )}
-                  {balance.address === "native" && <Wallet className="w-5 h-5 text-primary" />}
                   <span className="font-medium">{balance.symbol}</span>
                 </div>
                 <Badge variant="secondary" className="ml-auto">
@@ -87,15 +92,25 @@ export function InvestmentSection({
                   min={0}
                   max={Number.parseFloat(balance.balance)}
                   step="any"
-                  disabled={!selectedInvestments[balance.address] && selectedInvestments[balance.address] !== 0}
+                  disabled={
+                    !selectedInvestments[balance.address] &&
+                    selectedInvestments[balance.address] !== 0
+                  }
                   value={selectedInvestments[balance.address] || ""}
                   onChange={(e) =>
-                    handleInvestmentChange(balance.address, Number.parseFloat(balance.balance), e.target.value)
+                    handleInvestmentChange(
+                      balance.address,
+                      Number.parseFloat(balance.balance),
+                      e.target.value
+                    )
                   }
-                  placeholder={`Max: ${Number.parseFloat(balance.balance).toFixed(4)}`}
+                  placeholder={`Max: ${Number.parseFloat(
+                    balance.balance
+                  ).toFixed(4)}`}
                 />
                 <div className="text-xs text-muted-foreground">
-                  Available: {Number.parseFloat(balance.balance).toFixed(4)} {balance.symbol}
+                  Available: {Number.parseFloat(balance.balance).toFixed(4)}{" "}
+                  {balance.symbol}
                   <br />
                   Value: ${balance.value.toFixed(2)}
                 </div>
@@ -104,7 +119,9 @@ export function InvestmentSection({
           ))}
         </div>
 
-        {Object.keys(selectedInvestments).some((key) => selectedInvestments[key] > 0) && (
+        {Object.keys(selectedInvestments).some(
+          (key) => selectedInvestments[key] > 0
+        ) && (
           <div className="flex justify-center">
             <Button
               onClick={handleInvest}
@@ -128,5 +145,5 @@ export function InvestmentSection({
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
