@@ -6,6 +6,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { networks } from "@/utils/networks";
 import { TokenBalance } from "@/types/token";
 import { getTokenLogo } from "@/utils/tokenLogos";
+import { fallbackPrices } from "@/lib/utils";
 
 interface Network {
   name: string;
@@ -22,8 +23,9 @@ const nativeTokenIds: Record<string, string> = {
   avalanche: "avalanche-2",
   "bnb smart chain": "binancecoin",
   base: "ethereum", // Base uses ETH
-  "eth-sepolia": "ethereum",
+  sepolia: "ethereum",
   "arb-sepolia": "ethereum",
+  "avalanche fuji": "avalanche-2",
 };
 const nativeTokenLogos: Record<string, string> = {
   ethereum: "https://assets.coingecko.com/coins/images/279/small/ethereum.png",
@@ -59,6 +61,11 @@ const fetchTokenPriceUSD = async (
   chain: string
 ): Promise<number> => {
   try {
+    // Handle native token prices
+    if (contractAddress === "native") {
+      return fetchNativePriceUSD(chain);
+    }
+
     // Map network name to CoinGecko platform id
     const platformMap: Record<string, string> = {
       ethereum: "ethereum",
@@ -68,49 +75,74 @@ const fetchTokenPriceUSD = async (
       avalanche: "avalanche",
       "bnb smart chain": "binance-smart-chain",
       base: "base",
-      "eth-sepolia": "ethereum",
+      sepolia: "ethereum",
       "arb-sepolia": "arbitrum-one",
+      "avalanche fuji": "avalanche",
+      "avax-fuji": "avalanche",
     };
 
+    const normalizedAddress = contractAddress.toLowerCase();
+
+    // console.log(
+    //   "Fetching token price for:",
+    //   contractAddress,
+    //   "on chain:",
+    //   chain
+    // );
     const platformId = platformMap[chain.toLowerCase()];
-    if (!platformId) return 0;
+    // console.log("Platform ID for chain:", platformId);
+
+    if (!platformId) {
+      return fallbackPrices[normalizedAddress] || 0;
+    }
 
     const url = `https://api.coingecko.com/api/v3/simple/token_price/${platformId}?contract_addresses=${contractAddress}&vs_currencies=usd`;
     const res = await fetch(url);
 
     if (!res.ok) {
-      console.warn(`Failed to fetch price for ${contractAddress} on ${chain}`);
-      return 0;
+      console.warn(
+        `Failed to fetch price for ${contractAddress} on ${chain}, using fallback price`
+      );
+      return fallbackPrices[normalizedAddress] || 0;
     }
 
     const data = await res.json();
-    const price = data[contractAddress.toLowerCase()]?.usd;
-    return price ? Number(price) : 0;
+    const price = data[normalizedAddress]?.usd;
+    // console.log("Fetched price:", price, "for address:", normalizedAddress);
+    return price ? Number(price) : fallbackPrices[normalizedAddress] || 0;
   } catch (e) {
     console.error("Error fetching token price:", e);
-    return 0;
+    // Return fallback price if available, otherwise 0
+    return fallbackPrices[contractAddress.toLowerCase()] || 0;
   }
 };
 
 const fetchNativePriceUSD = async (chain: string): Promise<number> => {
   try {
+    console.log("Fetching native price for chain:", chain);
     const tokenId = nativeTokenIds[chain.toLowerCase()];
     if (!tokenId) return 0;
-
+    console.log(chain, tokenId);
     const url = `https://api.coingecko.com/api/v3/simple/price?ids=${tokenId}&vs_currencies=usd`;
     const res = await fetch(url);
 
     if (!res.ok) {
-      console.warn(`Failed to fetch native price for ${chain}`);
-      return 0;
+      console.warn(
+        `Failed to fetch native price for ${chain}, using fallback price`
+      );
+      // Use fallback price for native token
+      return fallbackPrices[`native-${chain.toLowerCase()}`] || 0;
     }
 
     const data = await res.json();
     const price = data[tokenId]?.usd;
-    return price ? Number(price) : 0;
+    return price
+      ? Number(price)
+      : fallbackPrices[`native-${chain.toLowerCase()}`] || 0;
   } catch (e) {
     console.error("Error fetching native token price:", e);
-    return 0;
+    // Return fallback price for native token
+    return fallbackPrices[`native-${chain.toLowerCase()}`] || 0;
   }
 };
 
@@ -153,7 +185,6 @@ const fetchNativeBalance = async (
     const symbol =
       nativeTokenSymbols[network.name.toLowerCase()] ||
       network.name.toUpperCase();
-    console.log("Network name: ", network.name);
     return {
       chain: network.name,
       symbol,

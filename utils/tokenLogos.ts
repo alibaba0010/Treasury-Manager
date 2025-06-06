@@ -65,13 +65,6 @@ export function getTokenLogo(
   // Check for network-specific token logo
   const networkTokens = TOKEN_LOGOS[normalizedNetwork]?.tokens;
 
-  // Debug logging to help track the issue
-  console.log("Looking up token:", {
-    network: normalizedNetwork,
-    address: normalizedAddress,
-    availableTokens: networkTokens,
-  });
-
   // Make sure networkTokens exists before accessing it
   if (networkTokens && normalizedAddress in networkTokens) {
     return networkTokens[normalizedAddress];

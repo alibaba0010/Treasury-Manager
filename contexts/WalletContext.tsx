@@ -77,18 +77,3 @@ export function useWallet() {
   }
   return context;
 }
-//   useEffect(() => {
-//     if (account.isConnected) {
-//       const { address, addresses, status, chain } = account;
-//       dispatch(setWalletAdress({ address, addresses, status }));
-//       if (chain?.name === "Electroneum Mainnet") {
-//         setHasAccess(true);
-//         if (url && !hasNavigated) {
-//           navigate(url);
-//           setHasNavigated(true);
-//         }
-//       }
-//     } else {
-//       navigate("/");
-//     }
-//   }, [account, url, hasNavigated]);

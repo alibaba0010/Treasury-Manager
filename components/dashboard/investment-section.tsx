@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { DollarSign, Wallet } from "lucide-react";
+import { DollarSign } from "lucide-react";
 import type { TokenBalance } from "@/types/token";
 
 interface InvestmentSectionProps {
