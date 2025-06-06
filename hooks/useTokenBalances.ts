@@ -329,7 +329,7 @@ const fetchNetworkBalances = async (
   }
 };
 
-export function useTokenBalances(includeTestnets = false) {
+export function useTokenBalances() {
   const { walletAddress, isConnected } = useWallet();
   const [balances, setBalances] = useState<TokenBalance[]>([]);
   const [nativeBalances, setNativeBalances] = useState<TokenBalance[]>([]);
@@ -393,7 +393,7 @@ export function useTokenBalances(includeTestnets = false) {
     }
 
     fetchBalances();
-  }, [walletAddress, isConnected, includeTestnets]);
+  }, [walletAddress, isConnected]);
 
   return { balances, nativeBalances, isLoading, totalValue, error };
 }

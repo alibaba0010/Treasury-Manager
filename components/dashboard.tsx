@@ -19,11 +19,9 @@ export function Dashboard() {
   const [selectedInvestments, setSelectedInvestments] = useState<{
     [key: string]: number;
   }>({});
-  const [isInvesting, setIsInvesting] = useState(false);
   const { isConnected, walletAddress } = useWallet();
   const { balances, isLoading, totalValue, nativeBalances } =
     useTokenBalances();
-
   // Simulate real-time updates for other metrics
   useEffect(() => {
     const interval = setInterval(() => {
@@ -71,34 +69,34 @@ export function Dashboard() {
     return total;
   };
 
-  const handleInvest = async () => {
-    setIsInvesting(true);
-    try {
-      const totalInvestmentValue = calculateTotalInvestmentValue();
+  // const handleInvest = async () => {
+  //   setIsInvesting(true);
+  //   try {
+  //     const totalInvestmentValue = calculateTotalInvestmentValue();
 
-      // Simulate investment process
-      console.log("Converting tokens to USDC...");
-      console.log("Total investment value:", totalInvestmentValue);
-      console.log("Selected investments:", selectedInvestments);
+  //     // Simulate investment process
+  //     console.log("Converting tokens to USDC...");
+  //     console.log("Total investment value:", totalInvestmentValue);
+  //     console.log("Selected investments:", selectedInvestments);
 
-      // Here you would implement the actual token swapping logic
-      // This could involve calling smart contracts or DEX APIs
+  //     // Here you would implement the actual token swapping logic
+  //     // This could involve calling smart contracts or DEX APIs
 
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API call
+  //     await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API call
 
-      alert(
-        `Successfully invested $${totalInvestmentValue.toFixed(
-          2
-        )} worth of tokens and converted to USDC!`
-      );
-      setSelectedInvestments({});
-    } catch (error) {
-      console.error("Investment failed:", error);
-      alert("Investment failed. Please try again.");
-    } finally {
-      setIsInvesting(false);
-    }
-  };
+  //     alert(
+  //       `Successfully invested $${totalInvestmentValue.toFixed(
+  //         2
+  //       )} worth of tokens and converted to USDC!`
+  //     );
+  //     setSelectedInvestments({});
+  //   } catch (error) {
+  //     console.error("Investment failed:", error);
+  //     alert("Investment failed. Please try again.");
+  //   } finally {
+  //     setIsInvesting(false);
+  //   }
+  // };
 
   if (!isConnected || !walletAddress) {
     return (
@@ -139,8 +137,6 @@ export function Dashboard() {
         setSelectedInvestments={setSelectedInvestments}
         handleInvestmentChange={handleInvestmentChange}
         calculateTotalInvestmentValue={calculateTotalInvestmentValue}
-        handleInvest={handleInvest}
-        isInvesting={isInvesting}
       />
 
       {/* Charts Section */}

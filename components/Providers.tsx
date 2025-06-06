@@ -17,22 +17,19 @@ const { wallets } = getDefaultWallets({
   projectId,
 });
 
-export function Providers(props: {
-  children: ReactNode;
-  initialState?: State;
-}) {
+export function Providers({ children }: { children: React.ReactNode }) {
   const [config] = useState(() => getConfig());
   const [queryClient] = useState(() => new QueryClient());
 
   return (
-    <WagmiProvider config={config} initialState={props.initialState}>
+    <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider
           modalSize="compact"
           showRecentTransactions={false}
           initialChain={chains[0]}
         >
-          <WalletProvider>{props.children}</WalletProvider>
+          <WalletProvider>{children}</WalletProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

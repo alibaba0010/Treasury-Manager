@@ -17,6 +17,7 @@ interface WalletContextType {
   handleConnectWallet: () => void;
   handleDisconnectWallet: () => void;
   walletAddress?: string | null;
+  chain: string | null;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -63,6 +64,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     handleDisconnectWallet,
     isConnecting: walletState.isConnecting,
     walletAddress: walletState.walletAddress,
+    chain: chain?.name?.toString() || null,
   };
 
   return (

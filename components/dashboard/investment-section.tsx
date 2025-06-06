@@ -9,6 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DollarSign } from "lucide-react";
 import type { TokenBalance } from "@/types/token";
+import { useWallet } from "@/contexts/WalletContext";
+import { useContract } from "@/hooks/useContract";
+import { useState } from "react";
 
 interface InvestmentSectionProps {
   balances: TokenBalance[];
@@ -19,8 +22,6 @@ interface InvestmentSectionProps {
   >;
   handleInvestmentChange: (address: string, max: number, value: string) => void;
   calculateTotalInvestmentValue: () => number;
-  handleInvest: () => void;
-  isInvesting: boolean;
 }
 
 export function InvestmentSection({
@@ -30,10 +31,43 @@ export function InvestmentSection({
   setSelectedInvestments,
   handleInvestmentChange,
   calculateTotalInvestmentValue,
-  handleInvest,
-  isInvesting,
 }: InvestmentSectionProps) {
-  const allTokens = [...balances, ...nativeBalances];
+  // const allTokens = [...balances, ...nativeBalances];
+  const { chain } = useWallet();
+  const [isInvesting, setIsInvesting] = useState(false);
+
+  const { sendUSDCToContract, swapETHToUSDCAndSend } = useContract();
+  const allTokens = [...balances, ...nativeBalances].filter(
+    (token) => token.chain.toLowerCase() === chain?.toLowerCase()
+  );
+  // console.log(
+  //   "Native Balances:",
+  //   allTokens.map((token) => token.address)
+  // );
+  async function handleInvest() {
+    setIsInvesting(true);
+    try {
+      for (const [address, amount] of Object.entries(selectedInvestments)) {
+        if (amount > 0) {
+          const token = allTokens.find((t) => t.address === address);
+          if (!token) continue;
+
+          if (token.symbol === "USDC") {
+            // Send USDC directly to contract
+            await sendUSDCToContract(address, amount);
+          } else if (token.symbol === "ETH") {
+            // Swap ETH to USDC, then send to contract
+            await swapETHToUSDCAndSend(amount);
+          }
+          // Add more token logic as needed
+        }
+      }
+      // Optionally, refresh balances here
+    } catch (err) {
+      // Handle error
+    }
+    setIsInvesting(false);
+  }
 
   return (
     <Card className="bg-gradient-to-br from-card to-card/50 border-2 hover:border-primary/20 transition-all duration-300">
@@ -109,7 +143,11 @@ export function InvestmentSection({
                   ).toFixed(4)}`}
                 />
                 <div className="text-xs text-muted-foreground">
-                  Available: {Number.parseFloat(balance.balance).toFixed(4)}{" "}
+                  Available:{" "}
+                  {(
+                    Number.parseFloat(balance.balance) -
+                    (selectedInvestments[balance.address] || 0)
+                  ).toFixed(4)}{" "}
                   {balance.symbol}
                   <br />
                   Value: ${balance.value.toFixed(2)}
