@@ -55,7 +55,7 @@ export function InvestmentSection({
           if (token.symbol === "USDC") {
             // Send USDC directly to contract
             await sendUSDCToContract(address, amount);
-          } else if (token.symbol === "ETH") {
+          } else {
             // Swap ETH to USDC, then send to contract
             await swapETHToUSDCAndSend(amount);
           }
